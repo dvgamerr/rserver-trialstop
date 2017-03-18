@@ -1,0 +1,24 @@
+{
+  "name": "rserver-trialstop",
+  "version": "1.0.0",
+  "description": "",
+  "main": "watch.js",
+  "scripts": {
+    "start": "babel-node watch.js --presets es2015,stage-2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/unhax/rserver-trialstop.git"
+  },
+  "author": "UNhaX",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/unhax/rserver-trialstop/issues"
+  },
+  "homepage": "https://github.com/unhax/rserver-trialstop#readme",
+  "devDependencies": {
+    "babel-cli": "^6.24.0",
+    "babel-preset-es2015": "^6.24.0",
+    "babel-preset-stage-2": "^6.22.0"
+  }
+}
