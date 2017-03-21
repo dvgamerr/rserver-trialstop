@@ -2,9 +2,7 @@ import { exec } from 'child_process'
 import { CronJob as cron } from 'cron'
 import fs from 'fs'
 import path from 'path'
-import ini from 'ini'
 import moment from 'moment'
-import async from 'async-q'
 import Q from 'q'
 
 const crack = `\\rserver30\\rserver3.exe`
@@ -36,17 +34,16 @@ try {
 	throw new Error(`Command prompt run without Administrator.`)
 }
 // Watch server
-let jobWatch = new cron('*/7 * * * * *', () => {
-	cmd('start /MIN cmd /c "sc query rserver3 > dump.tmp"').then(result => {
+let jobWatch = () => {
+	cmd('sc query rserver3').then(result => {
 		let state = /STATE.*?:.*?\d+.*?(\w+)/ig.exec(fs.readFileSync('./dump.tmp'))
 		return (state && state[1] === 'STOPPED') ? cmd('net start rserver3') : false
 	}).then(result => {
 		if(result) console.log(`${moment().format('DD-MM-YYYY HH:mm:ss')} Radmin Server service restarted.`)
 	}).catch(e => {
 		console.log(`The Radmin Server V3 service was not found.`)
-		jobWatch.stop()
 	})
-}, false)
+}
 
 if (!fs.existsSync(stoptrial)) {
 	console.log(`The Radmin Server V3 Crack...`)
@@ -61,11 +58,11 @@ if (!fs.existsSync(stoptrial)) {
 	}).then(result => {
 		if (!fs.existsSync(stoptrial)) fs.mkdirSync(stoptrial)
 		console.log(`The Radmin Server Watch...`)
-		jobWatch.start()
+		jobWatch()
 	}).catch(e => {
 		console.log(`error`, e)
 	})
 } else {
 	console.log(`The Radmin Server Watch...`)
-	jobWatch.start()
+	jobWatch()
 }

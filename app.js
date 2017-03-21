@@ -12,17 +12,9 @@ var _path = require('path');
 
 var _path2 = _interopRequireDefault(_path);
 
-var _ini = require('ini');
-
-var _ini2 = _interopRequireDefault(_ini);
-
 var _moment = require('moment');
 
 var _moment2 = _interopRequireDefault(_moment);
-
-var _asyncQ = require('async-q');
-
-var _asyncQ2 = _interopRequireDefault(_asyncQ);
 
 var _q = require('q');
 
@@ -63,17 +55,16 @@ try {
 	throw new Error('Command prompt run without Administrator.');
 }
 // Watch server
-var jobWatch = new _cron.CronJob('*/7 * * * * *', function () {
+var jobWatch = function jobWatch() {
 	cmd('sc query rserver3').then(function (result) {
-		var state = /STATE.*?:.*?\d+.*?(\w+)/ig.exec(result);
+		var state = /STATE.*?:.*?\d+.*?(\w+)/ig.exec(_fs2.default.readFileSync('./dump.tmp'));
 		return state && state[1] === 'STOPPED' ? cmd('net start rserver3') : false;
 	}).then(function (result) {
 		if (result) console.log((0, _moment2.default)().format('DD-MM-YYYY HH:mm:ss') + ' Radmin Server service restarted.');
 	}).catch(function (e) {
 		console.log('The Radmin Server V3 service was not found.');
-		jobWatch.stop();
 	});
-}, false);
+};
 
 if (!_fs2.default.existsSync(stoptrial)) {
 	console.log('The Radmin Server V3 Crack...');
@@ -88,11 +79,11 @@ if (!_fs2.default.existsSync(stoptrial)) {
 	}).then(function (result) {
 		if (!_fs2.default.existsSync(stoptrial)) _fs2.default.mkdirSync(stoptrial);
 		console.log('The Radmin Server Watch...');
-		jobWatch.start();
+		jobWatch();
 	}).catch(function (e) {
 		console.log('error', e);
 	});
 } else {
 	console.log('The Radmin Server Watch...');
-	jobWatch.start();
+	jobWatch();
 }
