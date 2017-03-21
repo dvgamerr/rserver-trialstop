@@ -5,8 +5,8 @@
   "main": "watch.js",
   "scripts": {
     "start": "node app.js",
-    "dev": "babel-node src/watch.js --presets es2015,stage-2",
-    "build": "babel src/watch.js --out-file app.js"
+    "dev": "babel-node watch.js --presets es2015,stage-2",
+    "build": "babel watch.js --out-file app.js"
   },
   "repository": {
     "type": "git",
