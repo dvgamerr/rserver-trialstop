@@ -37,8 +37,8 @@ try {
 }
 // Watch server
 let jobWatch = new cron('*/7 * * * * *', () => {
-	cmd('sc query rserver3').then(result => {
-		let state = /STATE.*?:.*?\d+.*?(\w+)/ig.exec(result)
+	cmd('start /MIN cmd /c "sc query rserver3 > dump.tmp"').then(result => {
+		let state = /STATE.*?:.*?\d+.*?(\w+)/ig.exec(fs.readFileSync('./dump.tmp'))
 		return (state && state[1] === 'STOPPED') ? cmd('net start rserver3') : false
 	}).then(result => {
 		if(result) console.log(`${moment().format('DD-MM-YYYY HH:mm:ss')} Radmin Server service restarted.`)
