@@ -34,22 +34,11 @@ var crack = '\\rserver30\\rserver3.exe';
 var x86 = process.env.windir + '\\System32' + crack;
 var x64 = process.env.windir + '\\SysWOW64' + crack;
 
-var exec = function exec(cmd, arg, ignore) {
-	var def = _q2.default.defer(),
-	    error = false,
-	    stdout = '',
-	    stderr = '';
-	var ls = (0, _child_process.spawn)(cmd, arg);
-	ls.stdout.on('data', function (data) {
-		return stdout += data;
-	});
-	ls.stderr.on('data', function (data) {
-		stderr += data;
-		error = true;
-	});
-	ls.on('close', function (code) {
-		if (code == 0 && !error || ignore) {
-			def.resolve(stdout);
+var cmd = function cmd(command, ignore) {
+	var def = _q2.default.defer();
+	(0, _child_process.exec)(command, function (err, stdout) {
+		if (!err || ignore) {
+			def.resolve(stdout.toString());
 		} else {
 			def.reject(false);
 		}
@@ -75,9 +64,9 @@ try {
 }
 // Watch server
 var jobWatch = new _cron.CronJob('*/7 * * * * *', function () {
-	exec('sc', ['query', 'rserver3'], true).then(function (result) {
+	cmd('sc query rserver3').then(function (result) {
 		var state = /STATE.*?:.*?\d+.*?(\w+)/ig.exec(result);
-		return state && state[1] === 'STOPPED' ? exec('net', ['start', 'rserver3']) : false;
+		return state && state[1] === 'STOPPED' ? cmd('net start rserver3') : false;
 	}).then(function (result) {
 		if (result) console.log((0, _moment2.default)().format('DD-MM-YYYY HH:mm:ss') + ' Radmin Server service restarted.');
 	}).catch(function (e) {
@@ -88,14 +77,14 @@ var jobWatch = new _cron.CronJob('*/7 * * * * *', function () {
 
 if (!_fs2.default.existsSync(stoptrial)) {
 	console.log('The Radmin Server V3 Crack...');
-	exec('net', ['stop', 'rserver3'], true).then(function (result) {
+	cmd('net stop rserver3', true).then(function (result) {
 		console.log('The Radmin Server V3 service was stopped successfully.');
 		_fs2.default.createReadStream('./newtstop').pipe(_fs2.default.createWriteStream(rserver + '\\wsock32.dll'));
 		_fs2.default.createReadStream('./nts64helper').pipe(_fs2.default.createWriteStream(rserver + '\\nts64helper.dll'));
-		return exec('net', ['start', 'rserver3']);
+		return cmd('net start rserver3');
 	}).then(function (result) {
 		console.log('The Radmin Server V3 service was started successfully.');
-		return exec('rundll32', [rserver + '\\wsock32.dll,ntskd']);
+		return cmd('rundll32 ' + rserver + '\\wsock32.dll,ntskd');
 	}).then(function (result) {
 		if (!_fs2.default.existsSync(stoptrial)) _fs2.default.mkdirSync(stoptrial);
 		console.log('The Radmin Server Watch...');

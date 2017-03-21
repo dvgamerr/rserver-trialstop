@@ -1,4 +1,4 @@
-import { spawn } from 'child_process'
+import { exec } from 'child_process'
 import { CronJob as cron } from 'cron'
 import fs from 'fs'
 import path from 'path'
@@ -11,18 +11,12 @@ const crack = `\\rserver30\\rserver3.exe`
 const x86 = `${process.env.windir}\\System32${crack}`
 const x64 = `${process.env.windir}\\SysWOW64${crack}`
 
-const exec = (cmd, arg, ignore) => {
-  let def = Q.defer(), error = false, stdout = '', stderr = '';
-  const ls = spawn(cmd, arg);
-  ls.stdout.on('data', data => stdout += data);
-  ls.stderr.on('data', data => {
-  	stderr += data
-  	error = true
-  });
-  ls.on('close', (code) => {
-    if((code == 0 && !error) || ignore) { def.resolve(stdout); } else { def.reject(false); }
-  });
-  return def.promise;
+const cmd = (command, ignore) => {
+  let def = Q.defer()
+	exec(command, function(err, stdout) {
+		if (!err || ignore) { def.resolve(stdout.toString()) } else { def.reject(false) }
+	})
+  return def.promise
 }
 
 let rserver = undefined
@@ -43,35 +37,35 @@ try {
 }
 // Watch server
 let jobWatch = new cron('*/7 * * * * *', () => {
-	exec('sc', ['query','rserver3'], true).then(result => {
+	cmd('sc query rserver3').then(result => {
 		let state = /STATE.*?:.*?\d+.*?(\w+)/ig.exec(result)
-		return (state && state[1] === 'STOPPED') ? exec('net', ['start','rserver3']) : false
+		return (state && state[1] === 'STOPPED') ? cmd('net start rserver3') : false
 	}).then(result => {
 		if(result) console.log(`${moment().format('DD-MM-YYYY HH:mm:ss')} Radmin Server service restarted.`)
 	}).catch(e => {
 		console.log(`The Radmin Server V3 service was not found.`)
 		jobWatch.stop()
 	})
-}, false);
+}, false)
 
 if (!fs.existsSync(stoptrial)) {
 	console.log(`The Radmin Server V3 Crack...`)
-	exec('net', ['stop','rserver3'], true).then(result => {
+	cmd('net stop rserver3', true).then(result => {
 		console.log(`The Radmin Server V3 service was stopped successfully.`)
-		fs.createReadStream(`./newtstop`).pipe(fs.createWriteStream(`${rserver}\\wsock32.dll`));
-		fs.createReadStream(`./nts64helper`).pipe(fs.createWriteStream(`${rserver}\\nts64helper.dll`));
-		return exec('net', ['start','rserver3'])
+		fs.createReadStream(`./newtstop`).pipe(fs.createWriteStream(`${rserver}\\wsock32.dll`))
+		fs.createReadStream(`./nts64helper`).pipe(fs.createWriteStream(`${rserver}\\nts64helper.dll`))
+		return cmd('net start rserver3')
 	}).then(result => {
 		console.log(`The Radmin Server V3 service was started successfully.`)
-		return exec('rundll32', [`${rserver}\\wsock32.dll,ntskd`])
+		return cmd(`rundll32 ${rserver}\\wsock32.dll,ntskd`)
 	}).then(result => {
 		if (!fs.existsSync(stoptrial)) fs.mkdirSync(stoptrial)
 		console.log(`The Radmin Server Watch...`)
-		jobWatch.start();
+		jobWatch.start()
 	}).catch(e => {
 		console.log(`error`, e)
 	})
 } else {
 	console.log(`The Radmin Server Watch...`)
-	jobWatch.start();
+	jobWatch.start()
 }
